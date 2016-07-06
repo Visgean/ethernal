@@ -12,17 +12,15 @@ def show_block(block=None):
     if block is None:
         block = eth_client.eth.getBlockNumber()
     details = eth_client.eth.getBlock(block)
+
+    # hide annoying bloom filter:
+    details['logsBloom'] = details['logsBloom'][:20] + '...'
+
     return render_template(
         'block.html',
         details=details,
         block=block,
     )
-
-
-
-
-
-
 
 if __name__ == "__main__":
     app.run()
