@@ -8,10 +8,10 @@ SHORT_TRANSACTION_IGNORE_FIELDS = ['blockHash', 'blockNumber']
 
 def wei_to_ether(wei):
     """Converts 0x wei value to decimal value in ether"""
-    return eth_client.fromWei(
+    return float(eth_client.fromWei(
         eth_client.toDecimal(wei),
         'ether'
-    )
+    ))
 
 
 def get_short_transaction(transaction):
