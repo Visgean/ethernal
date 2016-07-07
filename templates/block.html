@@ -20,9 +20,14 @@
 </head>
 <body>
 <div>
-    <h1>Ethernal block no. <a href="{{ url_for('block', block_number=block_number) }}">{{ block_number }}</a></h1>
     <pre><code class="json">{{ block_info|tojson(indent=4)|safe }}</code></pre>
-
+    <nav>
+      <ul class="pager">
+        <li class="pager-prev"><a href="{{ url_for('block', block_number=previous_block) }}">Previous</a></li>
+        <li><a href="{{ url_for('block', block_number=block_number) }}">Ethernal {{ block_number }}</a></li>
+        <li class="pager-next"><a href="{{ url_for('block', block_number=next_block) }}">Next</a></li>
+      </ul>
+    </nav>
 
 </div>
 
