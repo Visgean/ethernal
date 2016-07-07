@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 
 {% block raw_content %}
-    {% include 'dumped_json.html' %}
+    {% include 'dumped_json.html' json_info=block.json_info %}
     <nav>
       <ul class="pager">
-        <li class="pager-prev"><a href="{{ url_for('block', block_number=previous_block) }}">Previous</a></li>
-        <li><a href="{{ url_for('block', block_number=block_number) }}">Block {{ block_number }}</a></li>
-        <li class="pager-next"><a href="{{ url_for('block', block_number=next_block) }}">Next</a></li>
+        <li class="pager-prev"><a href="{{ url_for('block', block_number=block.previous_block) }}">Previous</a></li>
+        <li><a href="{{ url_for('block', block_number=block.number) }}">Block {{ block.number }}</a></li>
+        <li class="pager-next"><a href="{{ url_for('block', block_number=block.next_block) }}">Next</a></li>
       </ul>
     </nav>
 {% endblock %}

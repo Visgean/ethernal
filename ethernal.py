@@ -1,3 +1,6 @@
+import json
+import os
+
 from web3 import Web3, IPCProvider
 
 
@@ -26,7 +29,42 @@ class Block:
         self.number = number
         self.number = number
 
-        assert number in range(1, self.chain.latest_block)
+        self.content = self.get_content()
+
+        assert number in range(1, self.chain.height)
+
+    def get_content(self):
+        # always reload fresh block numbers - the head is changing on consensus
+        if self.is_fresh:
+            return self._from_ipc()
+
+        cached = self.get_cache()
+        if cached:
+            return cached
+
+        data = self._from_ipc()
+        self.write_cache(data)
+        return dataz
+
+
+    def get_cache(self):
+        if os.path.exists(self.cache_filename):
+            with open(self.cache_filename) as cache:
+                return json.loads(cache.read())
+        return None
+
+    def write_cache(self, data):
+        if os.path.exists(self.cache_filename):
+            with open(self.cache_filename, 'w') as cache:
+                return cache.write(json.dumps(data))
+
+    @property
+    def is_fresh(self):
+        """
+        Is block deep enough in the chain to trust that the chain consensus
+        will not change in time?
+        """
+        return self.chain.height - self.number <= 100
 
     @property
     def previous_block(self):
@@ -39,6 +77,17 @@ class Block:
         if self.number == 1:
             return None
         return self.number - 1
+
+    @property
+    def cache_filename(self):
+        return os.path.join(
+            self.CACHE_FOLDER,
+            self.CACHE_FILENAME.format(self.number)
+        )
+
+    @property
+    def cache_exists(self):
+        return os.path.exists(self.cache_filename)
 
     def _from_ipc(self):
         block_info = self.web3.eth.getBlock(self.number)
@@ -63,7 +112,11 @@ class Block:
 class BlockChain:
     def __init__(self):
         self.web3 = Web3(IPCProvider())
-        self.latest_block = self.web3.eth.getBlockNumber()
+        self.height = self.web3.eth.getBlockNumber()
+
+    @property
+    def latest_block(self):
+        return Block(self.height, chain=self)
 
     def wei_to_ether(self, wei):
         """Converts 0x wei value to decimal value in ether"""
