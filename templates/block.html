@@ -6,19 +6,22 @@
     <meta name="viewport"
           content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <title>Ethernal {{ block }}</title>
+    <title>Ethernal block explorer</title>
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.2/css/bootstrap.min.css" integrity="sha384-y3tfxAZXuh4HwSYylfB+J125MxIs6mR5FOHamPBG064zB+AFeWH94NdvaCBm8qnd" crossorigin="anonymous">
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/dracula.min.css">
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/highlight.min.js"></script>
-
-
+    <style type="text/css">
+        ::-webkit-scrollbar {
+           display: none;
+        }
+    </style>
 </head>
 <body>
 <div>
-    <h1>This is Ethernal block no. {{ block }}</h1>
-    <pre><code class="json">{{ details|tojson(indent=4)|safe }}</code></pre>
+    <h1>This is Ethernal block no. <a href="{{ url_for('block', block=block) }}">{{ block }}</a></h1>
+    <pre><code class="json">{{ block_info|tojson(indent=4)|safe }}</code></pre>
 
 
 </div>
