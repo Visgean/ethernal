@@ -52,9 +52,8 @@ class Block:
         return None
 
     def write_cache(self, data):
-        if os.path.exists(self.cache_filename):
-            with open(self.cache_filename, 'w') as cache:
-                return cache.write(json.dumps(data))
+        with open(self.cache_filename, 'w') as cache:
+            return cache.write(json.dumps(data))
 
     @property
     def is_fresh(self):
@@ -62,7 +61,7 @@ class Block:
         Is block deep enough in the chain to trust that the chain consensus
         will not change in time?
         """
-        return self.chain.height - self.number <= 100
+        return (self.chain.height - self.number) <= 100
 
     @property
     def previous_block(self):
