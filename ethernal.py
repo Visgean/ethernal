@@ -46,7 +46,6 @@ class Block:
         self.write_cache(data)
         return data
 
-
     def get_cache(self):
         if os.path.exists(self.cache_filename):
             with open(self.cache_filename) as cache:
