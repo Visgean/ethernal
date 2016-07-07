@@ -44,7 +44,7 @@ class Block:
 
         data = self._from_ipc()
         self.write_cache(data)
-        return dataz
+        return data
 
 
     def get_cache(self):
