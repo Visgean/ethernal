@@ -100,8 +100,12 @@ class Block:
 
         # unpack the transactions
         block_info['transactions'] = [
-            self.chain.transaction_short(t) for t in block_info['transactions']
+            self.chain.transaction_full(t) for t in block_info['transactions']
         ]
+
+        # block_info['uncles_full'] = [
+        #     self.web3.eth.getUncle(u) for u in block_info['uncles']
+        # ]
 
         return block_info
 
@@ -122,25 +126,42 @@ class BlockChain:
             'ether'
         ))
 
-    def transaction_short(self, transaction):
-        """
-        :param transaction: transcation hash
-        :return: Returns dictionary of trans without block info
-        """
-        info = self.web3.eth.getTranscation(transaction)
-        for field in SHORT_TRANSACTION_IGNORE_FIELDS:
-            del info[field]
-        info['value'] = self.wei_to_ether(info['value'])
-        info['gasPrice'] = self.wei_to_ether(info['gasPrice'])
-        info['gas'] = self.web3.toDecimal(info['gas'])
-        info['tax'] = float(info['gas']) * float(info['gasPrice'])
-
+    def clean_transaction(self, data):
+        data['value'] = self.wei_to_ether(data['value'])
+        data['gasPrice'] = self.wei_to_ether(data['gasPrice'])
+        data['gas'] = self.web3.toDecimal(data['gas'])
+        data['tax'] = float(data['gas']) * float(data['gasPrice'])
         try:
-            info['input'] = self.web3.toUtf8(info['input'])
+            data['input'] = self.web3.toUtf8(data['input'])
         except UnicodeError:
             pass
+        return data
 
-        return info
+    def transaction_full(self, transaction):
+        return self.clean_transaction(
+            self.web3.eth.getTranscation(transaction)
+        )
+
+    def get_account_transaction(self, account):
+        """
+        This method searches in block and returns all transactions that
+        were either received or sent from this account.
+        As so far this implementation only searches in last N blocks.
+        In order to search the full blockchain some kind of advanced caching
+        will have to be implemented. s
+        """
+
+        last_blocks = [
+            Block(n, self) for n in range(self.height - 100, self.height)
+        ]
+
+        transactions = []
+
+        for block in last_blocks:
+            for transaction in block.content['transactions']:
+                if account in (transaction['from'], transaction['to']):
+                    transactions.append(transaction)
+        return transactions
 
     def get_account_info(self, address):
         balance = self.wei_to_ether(self.web3.eth.getBalance(address))
@@ -150,5 +171,6 @@ class BlockChain:
             'json_info': {
                 'balance': balance,
                 'code': code,
+                'transactions': self.get_account_transaction(account=address)
             }
         }

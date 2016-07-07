@@ -17,11 +17,11 @@ def home():
     )
 
 
-@app.route('/a/<a_id>')
-def account_detail(a_id):
+@app.route('/a/<account>')
+def account_detail(account):
     return render_template(
         'account.html',
-        **ethernal.get_account_info(a_id)
+        account_info=ethernal.BlockChain().get_account_info(account)
     )
 
 
