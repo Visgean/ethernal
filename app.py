@@ -1,12 +1,21 @@
 from flask import Flask
 from flask.templating import render_template
 from web3 import Web3, IPCProvider
+from web3.web3.exceptions import InvalidResponseException
 
 eth_client = Web3(IPCProvider())
 app = Flask(__name__)
 
 
 SHORT_TRANSACTION_IGNORE_FIELDS = ['blockHash', 'blockNumber']
+
+
+def wei_to_ether(wei):
+    """Converts 0x wei value to decimal value in ether"""
+    return eth_client.fromWei(
+        eth_client.toDecimal(wei),
+        'ether'
+    )
 
 
 def get_short_transaction(transaction):
@@ -17,18 +26,31 @@ def get_short_transaction(transaction):
     info = eth_client.eth.getTranscation(transaction)
     for field in SHORT_TRANSACTION_IGNORE_FIELDS:
         del info[field]
+    info['value'] = wei_to_ether(info['value'])
+    info['gasPrice'] = wei_to_ether(info['gasPrice'])
+    info['gas'] = eth_client.toDecimal(info['gas'])
+    info['tax'] = float(info['gas'] )* float(info['gasPrice'])
+
     return info
 
 
 @app.route('/')
 @app.route('/<int:block_number>')
 def block(block_number=None):
-    if block_number is None:
+    try:
+        block_info = eth_client.eth.getBlock(block_number)
+    except (KeyError, InvalidResponseException):
         block_number = eth_client.eth.getBlockNumber()
-    block_info = eth_client.eth.getBlock(block_number)
+        block_info = eth_client.eth.getBlock(block_number)
+
+    previous_block = block_number - 1
+    next_block = block_number + 1
 
     # show extra data:
-    block_info['extraData'] = eth_client.toAscii(block_info['extraData'])
+    try:
+        block_info['extraData'] = eth_client.toUtf8(block_info['extraData'])
+    except UnicodeDecodeError:
+        pass
 
     # hide annoying bloom filter:
     block_info['logsBloom'] = block_info['logsBloom'][:20] + '..McBLOOMBLOOM'
@@ -42,4 +64,6 @@ def block(block_number=None):
         'block.html',
         block_info=block_info,
         block_number=block_number,
+        previous_block=previous_block,
+        next_block=next_block,
     )
