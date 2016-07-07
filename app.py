@@ -1,4 +1,4 @@
-import utils
+import ethernal
 
 from flask import Flask
 from flask.templating import render_template
@@ -10,10 +10,14 @@ DONATION_ADDRESS = '0x663aBdde3302C5ecCce0f31467604B03e0d9554c'
 
 @app.route('/')
 def home():
+    chain = ethernal.BlockChain()
+    chain.
+
+
     return render_template(
         'home.html',
         donation_address=DONATION_ADDRESS,
-        **utils.get_block_info()
+
     )
 
 
@@ -21,7 +25,7 @@ def home():
 def account_detail(a_id):
     return render_template(
         'account.html',
-        **utils.get_account_info(a_id)
+        **ethernal.get_account_info(a_id)
     )
 
 
@@ -29,5 +33,5 @@ def account_detail(a_id):
 def block(block_number=None):
     return render_template(
         'block.html',
-        **utils.get_block_info(block_number)
+        **ethernal.get_block_info(block_number)
     )
