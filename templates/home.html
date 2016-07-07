@@ -1,0 +1,34 @@
+{% extends 'block.html' %}
+
+{% block extra_head %}
+    <style>
+    .jumbotron {
+        margin-bottom: 0;
+    }
+    </style>
+
+{% endblock %}
+
+{% block raw_content %}
+    <div class="jumbotron">
+      <div class="container">
+        <h1 class="display-3">Ethernal - blockchain explorer</h1>
+        <p>
+            <a href="https://github.com/Visgean/ethernal">Ethernal</a> is Ethereum blockchain explorer created by
+            <a target="_blank" href="https://github.com/visgean">Visgean Skeloru</a>.
+            The purpose of creating another blockchain explorer was to educate myself
+            with Ethereum data structures and to explore the data behind the network.
+        </p>
+          <p>
+            Down there you can see latest Ethereum block as it was returned from
+            Geth node. Some of the fields are modified - bloom filter is shortened.
+            All prices, costs and taxes are converted to Ether.
+        </p>
+        <p>
+            If you find Ethernal pleasing you can donate me Ether at
+            <code>0x663aBdde3302C5ecCce0f31467604B03e0d9554c</code>
+        </p>
+      </div>
+    </div>
+    {{ super() }}
+{% endblock %}

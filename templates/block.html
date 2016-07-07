@@ -1,25 +1,12 @@
 {% extends 'base.html' %}
 
-
-{% block extra_head %}
-    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/styles/darkula.min.css">
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.5.0/highlight.min.js"></script>
-{% endblock %}
-
 {% block raw_content %}
     <pre><code class="json">{{ block_info|tojson(indent=4)|safe }}</code></pre>
     <nav>
       <ul class="pager">
         <li class="pager-prev"><a href="{{ url_for('block', block_number=previous_block) }}">Previous</a></li>
-        <li><a href="{{ url_for('block', block_number=block_number) }}">Ethernal {{ block_number }}</a></li>
+        <li><a href="{{ url_for('block', block_number=block_number) }}">Block {{ block_number }}</a></li>
         <li class="pager-next"><a href="{{ url_for('block', block_number=next_block) }}">Next</a></li>
       </ul>
-{% endblock %}
-
-
-{% block extra_js %}
-<script>
-    hljs.initHighlightingOnLoad();
-</script>
-
+    </nav>
 {% endblock %}

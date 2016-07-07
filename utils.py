@@ -35,7 +35,7 @@ def get_short_transaction(transaction):
     return info
 
 
-def get_block_dict(block_number=None):
+def get_block_info(block_number=None):
     try:
         block_info = eth_client.eth.getBlock(block_number)
     except (KeyError, InvalidResponseException):
