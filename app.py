@@ -31,6 +31,11 @@ def get_short_transaction(transaction):
     info['gas'] = eth_client.toDecimal(info['gas'])
     info['tax'] = float(info['gas']) * float(info['gasPrice'])
 
+    try:
+        info['input'] = eth_client.toUtf8(info['input'])
+    except:
+        pass
+
     return info
 
 
