@@ -60,7 +60,7 @@ def get_block_info(block_number=None):
     ]
 
     return {
-        'block_info': block_info,
+        'json_info': block_info,
         'block_number': block_number,
         'previous_block': previous_block,
         'next_block': next_block,
