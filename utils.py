@@ -65,3 +65,8 @@ def get_block_info(block_number=None):
         'previous_block': previous_block,
         'next_block': next_block,
     }
+
+def get_account_info(t_id):
+    return {
+        'json_info': []
+    }
