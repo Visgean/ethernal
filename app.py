@@ -13,7 +13,7 @@ def home():
     return render_template(
         'home.html',
         donation_address=DONATION_ADDRESS,
-        block=ethernal.BlockChain().latest_block.block,
+        block=ethernal.BlockChain().latest_block,
     )
 
 
