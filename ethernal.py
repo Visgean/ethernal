@@ -27,10 +27,10 @@ class Block:
         self.chain = chain
         self.web3 = chain.web3
         self.number = number
-        
+
         self.content = self.get_content()
 
-        assert number in range(1, self.chain.height)
+        assert number <= self.chain.height
 
     def get_content(self):
         # always reload fresh block numbers - the head is changing on consensus
