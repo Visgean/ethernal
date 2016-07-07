@@ -29,7 +29,7 @@ def get_short_transaction(transaction):
     info['value'] = wei_to_ether(info['value'])
     info['gasPrice'] = wei_to_ether(info['gasPrice'])
     info['gas'] = eth_client.toDecimal(info['gas'])
-    info['tax'] = float(info['gas'] )* float(info['gasPrice'])
+    info['tax'] = float(info['gas']) * float(info['gasPrice'])
 
     return info
 
