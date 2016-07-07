@@ -20,7 +20,7 @@
 </head>
 <body>
 <div>
-    <h1>This is Ethernal block no. <a href="{{ url_for('block', block=block) }}">{{ block }}</a></h1>
+    <h1>Ethernal block no. <a href="{{ url_for('block', block_number=block_number) }}">{{ block_number }}</a></h1>
     <pre><code class="json">{{ block_info|tojson(indent=4)|safe }}</code></pre>
 
 

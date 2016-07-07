@@ -8,6 +8,7 @@ app = Flask(__name__)
 
 SHORT_TRANSACTION_IGNORE_FIELDS = ['blockHash', 'blockNumber']
 
+
 def get_short_transaction(transaction):
     """
     :param transaction: transcation hash
@@ -19,13 +20,15 @@ def get_short_transaction(transaction):
     return info
 
 
-
 @app.route('/')
-@app.route('/<int:block>')
-def block(block=None):
-    if block is None:
-        block = eth_client.eth.getBlockNumber()
-    block_info = eth_client.eth.getBlock(block)
+@app.route('/<int:block_number>')
+def block(block_number=None):
+    if block_number is None:
+        block_number = eth_client.eth.getBlockNumber()
+    block_info = eth_client.eth.getBlock(block_number)
+
+    # show extra data:
+    block_info['extraData'] = eth_client.toAscii(block_info['extraData'])
 
     # hide annoying bloom filter:
     block_info['logsBloom'] = block_info['logsBloom'][:20] + '..McBLOOMBLOOM'
@@ -35,13 +38,8 @@ def block(block=None):
         get_short_transaction(t) for t in block_info['transactions']
     ]
 
-
-
     return render_template(
         'block.html',
         block_info=block_info,
-        block=block,
+        block_number=block_number,
     )
-
-if __name__ == "__main__":
-    app.run()
