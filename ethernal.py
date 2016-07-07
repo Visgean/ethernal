@@ -27,8 +27,7 @@ class Block:
         self.chain = chain
         self.web3 = chain.web3
         self.number = number
-        self.number = number
-
+        
         self.content = self.get_content()
 
         assert number in range(1, self.chain.height)
