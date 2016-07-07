@@ -34,9 +34,7 @@ def get_short_transaction(transaction):
     return info
 
 
-@app.route('/')
-@app.route('/<int:block_number>')
-def block(block_number=None):
+def get_block_dict(block_number=None):
     try:
         block_info = eth_client.eth.getBlock(block_number)
     except (KeyError, InvalidResponseException):
@@ -60,10 +58,18 @@ def block(block_number=None):
         get_short_transaction(t) for t in block_info['transactions']
     ]
 
+    return {
+        'block_info': block_info,
+        'block_number': block_number,
+        'previous_block': previous_block,
+        'next_block': next_block,
+    }
+
+
+@app.route('/')
+@app.route('/<int:block_number>')
+def block(block_number=None):
     return render_template(
         'block.html',
-        block_info=block_info,
-        block_number=block_number,
-        previous_block=previous_block,
-        next_block=next_block,
+        **get_block_dict(block_number)
     )
