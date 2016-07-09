@@ -2,18 +2,46 @@ import ethernal
 
 from flask import Flask
 from flask.templating import render_template
+from flask.helpers import url_for
 
 app = Flask(__name__)
 
 DONATION_ADDRESS = '0x663aBdde3302C5ecCce0f31467604B03e0d9554c'
 
 
+def links_for_transactions(data):
+    links = {
+        str(data['blockNumber']): url_for('block', block_number=data['blockNumber'])
+    }
+
+    if data['from']:
+        links[data['from']] = url_for('account_detail', account=data['from'])
+
+    if data['to']:
+        links[data['to']] = url_for('account_detail', account=data['to'])
+
+    return links
+
+
+def links_for_block(block):
+    data = block.content
+    r = {
+        data['miner']: url_for('account_detail', account=data['miner']),
+    }
+
+    for t in data['transactions']:
+        r.update(links_for_transactions(t))
+    return r
+
+
 @app.route('/')
 def home():
+    block_obj = ethernal.BlockChain().latest_block
     return render_template(
         'home.html',
         donation_address=DONATION_ADDRESS,
-        block=ethernal.BlockChain().latest_block,
+        block=block_obj,
+        inline_links=links_for_block(block_obj)
     )
 
 
@@ -26,16 +54,21 @@ def account_detail(account):
 
 
 @app.route('/b/<int:block_number>')
+@app.route('/b/<block_number>')
 def block(block_number):
+    block_obj = ethernal.Block(block_number)
     return render_template(
         'block.html',
-        block=ethernal.Block(block_number)
+        block=block_obj,
+        inline_links=links_for_block(block_obj)
     )
 
 
 @app.route('/t/<t_hash>')
 def transaction(t_hash):
+    data = ethernal.BlockChain().get_transaction(t_hash)
     return render_template(
         'transaction.html',
-        transaction_info=ethernal.BlockChain().get_transaction(t_hash)
+        transaction_info=data,
+        inline_links=links_for_transactions(data)
     )

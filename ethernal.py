@@ -85,6 +85,7 @@ class BlockChain:
         data['value'] = self.wei_to_ether(data['value'])
         data['gasPrice'] = self.wei_to_ether(data['gasPrice'])
         data['gas'] = self.web3.toDecimal(data['gas'])
+        data['blockNumber'] = self.web3.toDecimal(data['blockNumber'])
         data['tax'] = float(data['gas']) * float(data['gasPrice'])
         try:
             data['input'] = self.web3.toUtf8(data['input'])

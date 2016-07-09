@@ -15,6 +15,10 @@
     {% block extra_head %}
     {% endblock %}
     <style type="text/css">
+        body {
+            background-color: beige;
+        }
+
         ::-webkit-scrollbar {
            display: none;
         }
@@ -24,9 +28,15 @@
 <div>
     {% block raw_content %}
     {% endblock %}
+    {% block navigation %}
+        <nav>
+          <ul class="pager">
+            <li><a href="/">Ethernal</a></li>
+          </ul>
+        </nav>
+    {% endblock %}
 </div>
 
-{% block extra_js %}{% endblock %}
 
 <script>
     hljs.initHighlightingOnLoad();
@@ -34,5 +44,22 @@
 <!-- jQuery first, then Bootstrap JS. -->
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.2/js/bootstrap.min.js" integrity="sha384-vZ2WRJMwsjRMW/8U7i6PWi6AlO1L79snBrmgiDpgIWJ82z8eA5lenwvxbMV1PAh7" crossorigin="anonymous"></script>
+{% block extra_js %}{% endblock %}
+
+{% if inline_links %}
+    <script>
+        var inline_links = {{ inline_links|tojson(indent=2)|safe  }};
+        var code_html = $('code').html();
+
+        Object.keys(inline_links).forEach(function (key, index) {
+            var link = '<a href="'+inline_links[key] + '">' + key + '</a>';
+            code_html = code_html.replace(new RegExp(key, 'g'), link)
+        });
+
+         $('code').html(code_html);
+    </script>
+{% endif %}
+
+
 </body>
 </html>
