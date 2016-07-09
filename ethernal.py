@@ -1,6 +1,3 @@
-import json
-import os
-
 from web3 import Web3, IPCProvider
 
 
@@ -8,20 +5,7 @@ SHORT_TRANSACTION_IGNORE_FIELDS = ['blockHash', 'blockNumber']
 
 
 class Block:
-    """
-    Simple cache-balancer:
-    - load block from json file if it exist
-    - if it is not in cache load it from node and save to cache
-    - for last 100 blocks always load from node
-
-    It also does some cleaning and post-processing on the block data
-    """
-
-    CACHE_FOLDER = 'blocks/'
-    CACHE_FILENAME = '{}.json'
-
     def __init__(self, number, chain=None):
-        # this architecture is still bit messy, block should not rely on chain
         if chain is None:
             chain = BlockChain()
         self.chain = chain
@@ -30,30 +14,11 @@ class Block:
 
         self.content = self.get_content()
 
-        assert number <= self.chain.height
+        # assert number <= self.chain.height
 
     def get_content(self):
-        # always reload fresh block numbers - the head is changing on consensus
-        if self.is_fresh:
-            return self._from_ipc()
+        return self._from_ipc()
 
-        cached = self.get_cache()
-        if cached:
-            return cached
-
-        data = self._from_ipc()
-        self.write_cache(data)
-        return data
-
-    def get_cache(self):
-        if os.path.exists(self.cache_filename):
-            with open(self.cache_filename) as cache:
-                return json.loads(cache.read())
-        return None
-
-    def write_cache(self, data):
-        with open(self.cache_filename, 'w') as cache:
-            return cache.write(json.dumps(data))
 
     @property
     def is_fresh(self):
@@ -73,18 +38,8 @@ class Block:
     def next_block(self):
         if self.number == 1:
             return None
-        return self.number - 1
+        return self.number + 1
 
-    @property
-    def cache_filename(self):
-        return os.path.join(
-            self.CACHE_FOLDER,
-            self.CACHE_FILENAME.format(self.number)
-        )
-
-    @property
-    def cache_exists(self):
-        return os.path.exists(self.cache_filename)
 
     def _from_ipc(self):
         block_info = self.web3.eth.getBlock(self.number)
@@ -103,9 +58,9 @@ class Block:
             self.chain.transaction_full(t) for t in block_info['transactions']
         ]
 
-        # block_info['uncles_full'] = [
-        #     self.web3.eth.getUncle(u) for u in block_info['uncles']
-        # ]
+        block_info['uncles_full'] = [
+            Block(u, self.chain).content for u in block_info['uncles']
+        ]
 
         return block_info
 
@@ -171,6 +126,5 @@ class BlockChain:
             'json_info': {
                 'balance': balance,
                 'code': code,
-                'transactions': self.get_account_transaction(account=address)
-            }
+             }
         }
