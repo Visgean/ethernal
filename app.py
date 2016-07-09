@@ -25,9 +25,17 @@ def account_detail(account):
     )
 
 
-@app.route('/b/<int:block_number>')
+@app.route('/b/<block_number>')
 def block(block_number):
     return render_template(
         'block.html',
         block=ethernal.Block(block_number)
+    )
+
+
+@app.route('/t/<t_hash>')
+def transaction(t_hash):
+    return render_template(
+        'transaction.html',
+        transaction_info=ethernal.BlockChain().get_transaction(t_hash)
     )

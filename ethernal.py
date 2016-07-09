@@ -123,8 +123,9 @@ class BlockChain:
         code = self.web3.eth.getCode(address)
 
         return {
-            'json_info': {
-                'balance': balance,
-                'code': code,
-             }
+            'balance': balance,
+            'code': code
         }
+
+    def get_transaction(self, t_hash):
+        return self.clean_transaction(self.web3.eth.getTranscation(t_hash))
