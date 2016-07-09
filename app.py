@@ -25,7 +25,7 @@ def account_detail(account):
     )
 
 
-@app.route('/b/<block_number>')
+@app.route('/b/<int:block_number>')
 def block(block_number):
     return render_template(
         'block.html',
