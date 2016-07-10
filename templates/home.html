@@ -2,36 +2,46 @@
 
 {% block extra_head %}
     <style>
-    .jumbotron {
-        margin-bottom: 0;
-        background-color: white;
-    }
+        .jumbotron {
+            margin-bottom: 0;
+            background-color: white;
+        }
     </style>
 
 {% endblock %}
 
 {% block raw_content %}
     <div class="jumbotron">
-      <div class="container">
-        <h1 class="display-3">Ethernal</h1>
-        <p>
-            <a href="https://github.com/Visgean/ethernal">Ethernal</a> is Ethereum blockchain explorer created by
-            <a target="_blank" href="https://github.com/visgean">Visgean Skeloru</a>.
-            The purpose of creating another blockchain explorer was to educate myself
-            with Ethereum data structures and to explore the data behind the network.
-        </p>
-          <p>
-            Down there you can see latest Ethereum block as it was returned from
-            Geth node. Some of the fields are modified - bloom filter is shortened.
-            All prices, costs and taxes are converted to Ether.
-        </p>
-        <p>
-            If you find Ethernal pleasing you can donate me Ether here:
-            <a href="{{ url_for('account_detail', account=donation_address) }}">
-            <pre>{{ donation_address }}</pre>
-            </a>
-        </p>
-      </div>
+        <div class="container">
+            <h1 class="display-3">Ethernal</h1>
+            <p>
+                <a href="https://github.com/Visgean/ethernal">Ethernal</a> is
+                Ethereum blockchain explorer created by
+                <a target="_blank" href="https://github.com/visgean">Visgean Skeloru</a>.
+                The aim of this project is to display the blockchain in its
+                true form and as it is. Remember that the head of the chain
+                can change as newer block distribute across the network.
+                Thus information presented should always be verified on your own
+                node and should be used with caution.
+            </p>
+
+            <p>
+                All prices, costs and taxes are displayed in Ether.
+                At the moment you can't see transactions for account,
+                this is important issue to solve and I will try to solve it
+                as soon as possible. You can click at most of the transactions,
+                block and accounts hashes to get to detail.
+
+            </p>
+
+            <p>
+
+                If you find Ethernal pleasing, you can buy me a beer at:
+                <a href="{{ url_for('account_detail', account=donation_address) }}">
+                    <pre>{{ donation_address }}</pre>
+                </a>
+            </p>
+        </div>
     </div>
     {{ super() }}
 {% endblock %}
