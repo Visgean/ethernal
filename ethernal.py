@@ -1,24 +1,101 @@
 from web3 import Web3, IPCProvider
+from flask.helpers import url_for
 
 
-SHORT_TRANSACTION_IGNORE_FIELDS = ['blockHash', 'blockNumber']
+class Transaction:
+    def __init__(self, t_hash, chain=None):
+        self.t_hash = t_hash
+        self.chain = chain or BlockChain()
+        self.web3 = self.chain.web3
+
+        self.content_raw = self.web3.eth.getTranscation(t_hash)
+        self.content = self._clean_data(self.content_raw)
+
+    def _clean_data(self, data):
+        data['value'] = self.chain.wei_to_ether(data['value'])
+        data['gasPrice'] = self.chain.wei_to_ether(data['gasPrice'])
+        data['gas'] = self.web3.toDecimal(data['gas'])
+        data['blockNumber'] = self.web3.toDecimal(data['blockNumber'])
+        data['tax'] = float(data['gas']) * float(data['gasPrice'])
+        try:
+            data['input'] = self.web3.toUtf8(data['input'])
+        except UnicodeError:
+            pass
+        return data
+
+    def get_links(self):
+        """
+        Inline links for the highlight js. String replacing will be used
+        to create the links.
+        """
+        links = {
+            self.content['hash']:
+                url_for('transaction', t_hash=self.content['hash']),
+            self.content['blockHash']:
+                url_for('block', block_number=self.content['blockHash'])
+        }
+        if self.content['from']:
+            links[self.content['from']] = url_for(
+                'account_detail', account=self.content['from']
+            )
+        if self.content['to']:
+            links[self.content['to']] = url_for(
+                'account_detail', account=self.content['to']
+            )
+        return links
+
+
+class Account:
+    def __init__(self, account, chain=None):
+        self.account = account
+        self.chain = chain or BlockChain()
+        self.web3 = self.chain.web3
+        self.content = self._get_account_info(self.account)
+
+    def _get_account_info(self, address):
+        balance = self.chain.wei_to_ether(self.web3.eth.getBalance(address))
+        code = self.web3.eth.getCode(address)
+
+        return {
+            'balance': balance,
+            'code': code
+        }
 
 
 class Block:
-    def __init__(self, number, chain=None):
-        if chain is None:
-            chain = BlockChain()
-        self.chain = chain
-        self.web3 = chain.web3
-        self.number = number
+    def __init__(self, block_id, chain=None):
+        self.chain = chain or BlockChain()
+        self.web3 = self.chain.web3
 
-        self.content = self.get_content()
+        self.content_raw = self._from_ipc(block_id)
+        self.transactions = [
+            Transaction(t, self.chain)
+            for t in self.content_raw['transactions']
+        ]
 
-        # assert number <= self.chain.height
+        try:
+            self.uncles = [
+                Block(u, self.chain) for u in self.content_raw['uncles']
+            ]
+        except KeyError:
+            self.uncles = []
 
-    def get_content(self):
-        return self._from_ipc()
+        self.content = self.clean(self.content_raw)
+        self.number = self.content['number']
 
+    def get_links(self):
+        r = {
+            self.content['miner']:
+                url_for('account_detail', account=self.content['miner']),
+            self.content['parentHash']:
+                url_for('block', block_number=self.content['parentHash'])
+        }
+
+        for t in self.transactions:
+            r.update(t.get_links())
+        for u in self.uncles:
+            r.update(u.get_links())
+        return r
 
     @property
     def is_fresh(self):
@@ -36,34 +113,31 @@ class Block:
 
     @property
     def next_block(self):
-        return self.number + 1
+        return min(self.chain.height, self.number + 1)
 
+    def _from_ipc(self, block_id):
+        return self.web3.eth.getBlock(block_id)
 
-    def _from_ipc(self):
-        block_info = self.web3.eth.getBlock(self.number)
-
+    def clean(self, data):
         # show extra data:
         try:
-            block_info['extraData'] = self.web3.toUtf8(block_info['extraData'])
+            data['extraData'] = self.web3.toUtf8(data['extraData'])
         except UnicodeDecodeError:
             pass
 
         # hide annoying bloom filter:
-        block_info['logsBloom'] = block_info['logsBloom'][:20] + '...'
+        data['logsBloom'] = data['logsBloom'][:20] + '...'
 
         # unpack the transactions
-        block_info['transactions'] = [
-            self.chain.transaction_full(t) for t in block_info['transactions']
-        ]
+        data['transactions'] = [t.content for t in self.transactions]
 
         try:
-            block_info['uncles_full'] = [
-                Block(u, self.chain).content for u in block_info['uncles']
+            data['uncles_full'] = [
+                Block(u, self.chain).content for u in data['uncles']
             ]
         except KeyError:
-            block_info['uncles_full'] = []
-
-        return block_info
+            data['uncles_full'] = []
+        return data
 
 
 class BlockChain:
@@ -81,53 +155,3 @@ class BlockChain:
             self.web3.toDecimal(wei),
             'ether'
         ))
-
-    def clean_transaction(self, data):
-        data['value'] = self.wei_to_ether(data['value'])
-        data['gasPrice'] = self.wei_to_ether(data['gasPrice'])
-        data['gas'] = self.web3.toDecimal(data['gas'])
-        data['blockNumber'] = self.web3.toDecimal(data['blockNumber'])
-        data['tax'] = float(data['gas']) * float(data['gasPrice'])
-        try:
-            data['input'] = self.web3.toUtf8(data['input'])
-        except UnicodeError:
-            pass
-        return data
-
-    def transaction_full(self, transaction):
-        return self.clean_transaction(
-            self.web3.eth.getTranscation(transaction)
-        )
-
-    def get_account_transaction(self, account):
-        """
-        This method searches in block and returns all transactions that
-        were either received or sent from this account.
-        As so far this implementation only searches in last N blocks.
-        In order to search the full blockchain some kind of advanced caching
-        will have to be implemented. s
-        """
-
-        last_blocks = [
-            Block(n, self) for n in range(self.height - 100, self.height)
-        ]
-
-        transactions = []
-
-        for block in last_blocks:
-            for transaction in block.content['transactions']:
-                if account in (transaction['from'], transaction['to']):
-                    transactions.append(transaction)
-        return transactions
-
-    def get_account_info(self, address):
-        balance = self.wei_to_ether(self.web3.eth.getBalance(address))
-        code = self.web3.eth.getCode(address)
-
-        return {
-            'balance': balance,
-            'code': code
-        }
-
-    def get_transaction(self, t_hash):
-        return self.clean_transaction(self.web3.eth.getTranscation(t_hash))
