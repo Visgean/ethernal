@@ -11,26 +11,25 @@ DONATION_ADDRESS = '0x663aBdde3302C5ecCce0f31467604B03e0d9554c'
 
 def links_for_transactions(data):
     links = {
-        str(data['blockNumber']): url_for('block', block_number=data['blockNumber'])
+        str(data['hash']): url_for('block', block_number=data['hash'])
     }
-
     if data['from']:
         links[data['from']] = url_for('account_detail', account=data['from'])
-
     if data['to']:
         links[data['to']] = url_for('account_detail', account=data['to'])
 
     return links
 
 
-def links_for_block(block):
-    data = block.content
+def links_for_block(data):
     r = {
         data['miner']: url_for('account_detail', account=data['miner']),
     }
 
     for t in data['transactions']:
         r.update(links_for_transactions(t))
+    for u in data['uncles_full']:
+        r.update(links_for_block(u))
     return r
 
 
@@ -41,7 +40,7 @@ def home():
         'home.html',
         donation_address=DONATION_ADDRESS,
         block=block_obj,
-        inline_links=links_for_block(block_obj)
+        inline_links=links_for_block(block_obj.content)
     )
 
 
@@ -60,7 +59,7 @@ def block(block_number):
     return render_template(
         'block.html',
         block=block_obj,
-        inline_links=links_for_block(block_obj)
+        inline_links=links_for_block(block_obj.content)
     )
 
 

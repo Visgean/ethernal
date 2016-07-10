@@ -31,13 +31,11 @@ class Block:
     @property
     def previous_block(self):
         if self.number == 1:
-            return None
+            return 1
         return self.number - 1
 
     @property
     def next_block(self):
-        if self.number == 1:
-            return None
         return self.number + 1
 
 
@@ -58,9 +56,12 @@ class Block:
             self.chain.transaction_full(t) for t in block_info['transactions']
         ]
 
-        block_info['uncles_full'] = [
-            Block(u, self.chain).content for u in block_info['uncles']
-        ]
+        try:
+            block_info['uncles_full'] = [
+                Block(u, self.chain).content for u in block_info['uncles']
+            ]
+        except KeyError:
+            block_info['uncles_full'] = []
 
         return block_info
 
