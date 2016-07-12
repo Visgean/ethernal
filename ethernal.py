@@ -1,3 +1,4 @@
+import cached_tools
 import rethinkdb as r
 
 from web3 import Web3, IPCProvider
@@ -54,10 +55,14 @@ class Account:
         self.web3 = self.chain.web3
         self.content = self._get_account_info(self.account)
 
-    def mined_blocks(self):
-        return r.table('blocks').filter(
-            {'miner': self.account}
-        ).count().run(self.chain.db_conn)
+    def get_full_info(self):
+        partial = self.content.copy()
+        partial.update({
+            'blocks_mined': cached_tools.mined_blocks(self.account),
+            'sent': cached_tools.transactions_sent(self.account),
+            'received': cached_tools.transactions_received(self.account)
+        })
+        return partial
 
     def _get_account_info(self, address):
         balance = self.chain.wei_to_ether(self.web3.eth.getBalance(address))
@@ -66,7 +71,6 @@ class Account:
         return {
             'balance': balance,
             'code': code,
-            'blocks_mined': self.mined_blocks()
         }
 
 

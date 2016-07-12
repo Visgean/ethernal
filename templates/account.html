@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block raw_content %}
-    {% with json_info=account.content  %}
+    {% with json_info=account.get_full_info()  %}
         {% include 'dumped_json.html' %}
     {% endwith %}
 {% endblock %}
