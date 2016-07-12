@@ -1,5 +1,4 @@
 import rethinkdb as r
-import time
 
 from web3 import Web3, IPCProvider
 from flask.helpers import url_for
@@ -55,13 +54,22 @@ class Account:
         self.web3 = self.chain.web3
         self.content = self._get_account_info(self.account)
 
+    def mined_blocks(self):
+        blocks = r.table('blocks').filter(
+            {'miner': self.account}
+        ).pluck(['hash']).run(self.chain.db_conn)
+
+        return [b['hash'] for b in blocks]
+
+
     def _get_account_info(self, address):
         balance = self.chain.wei_to_ether(self.web3.eth.getBalance(address))
         code = self.web3.eth.getCode(address)
 
         return {
             'balance': balance,
-            'code': code
+            'code': code,
+            'blocks_mined': self.mined_blocks()
         }
 
 
