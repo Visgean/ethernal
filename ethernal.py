@@ -55,12 +55,9 @@ class Account:
         self.content = self._get_account_info(self.account)
 
     def mined_blocks(self):
-        blocks = r.table('blocks').filter(
+        return r.table('blocks').filter(
             {'miner': self.account}
-        ).pluck(['hash']).run(self.chain.db_conn)
-
-        return [b['hash'] for b in blocks]
-
+        ).count().run(self.chain.db_conn)
 
     def _get_account_info(self, address):
         balance = self.chain.wei_to_ether(self.web3.eth.getBalance(address))
