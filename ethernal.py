@@ -143,6 +143,7 @@ class Block:
         return data
 
 
+# noinspection PyBroadException
 class BlockChain:
     def __init__(self):
         self.web3 = Web3(IPCProvider())
@@ -166,12 +167,21 @@ class BlockChain:
 
         return last_block, self.height
 
+    def sync_block(self, block_n):
+        block = Block(block_n, self)
+        r.table('blocks').insert(block.content).run(self.db_conn)
+
     def sync_range(self, start, stop, print_debug=True):
+        errors = []
+
         for block_n in range(start, stop):
-            if print_debug and block_n % 100==0:
+            if print_debug and block_n % 100 == 0:
                 print(block_n)
-            block = Block(block_n, self)
-            r.table('blocks').insert(block.content).run(self.db_conn)
+            try:
+                self.sync_block(block_n)
+            except:
+                errors.append(block_n)
+        return errors
 
     def sync_simple(self):
         """
@@ -182,11 +192,21 @@ class BlockChain:
     @classmethod
     def sync_chunk(cls, chunk):
         chain = cls()
-        chain.sync_range(chunk.start, chunk.stop, print_debug=False)
+        errors = chain.sync_range(chunk.start, chunk.stop, print_debug=False)
         chain.db_conn.close()
-        del chain
 
+        for block_n in errors:
+            for t in range(3):
+                try:
+                    chain.sync_block(block_n)
+                    errors.remove(block_n)
+                    break
+                except:
+                    continue
+
+        del chain
         print(chunk)
+        return errors
 
     def sync_multiprocess(self, processes=None):
         """
@@ -211,7 +231,9 @@ class BlockChain:
             for i in range(start, len(full_jobs), chunk_size)
         ]
 
-        pool.map(BlockChain.sync_chunk, job_chunks)
+        error_lists = pool.map(BlockChain.sync_chunk, job_chunks, chunksize=1)
+        print(error_lists)
+
         print('Sync complete.')
 
     @property

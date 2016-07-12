@@ -9,6 +9,6 @@ try:
 except (r.errors.ReqlOpFailedError):
     pass
 
-
-chain = BlockChain()
-chain.sync_multiprocess()
+if __name__ == '__main__':
+    chain = BlockChain()
+    chain.sync_multiprocess()
