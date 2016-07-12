@@ -183,6 +183,9 @@ class BlockChain:
     def sync_chunk(cls, chunk):
         chain = cls()
         chain.sync_range(chunk.start, chunk.stop, print_debug=False)
+        chain.db_conn.close()
+        del chain
+
         print(chunk)
 
     def sync_multiprocess(self, processes=None):
