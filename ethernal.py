@@ -1,3 +1,6 @@
+import rethinkdb as r
+import time
+
 from web3 import Web3, IPCProvider
 from flask.helpers import url_for
 
@@ -84,7 +87,7 @@ class Block:
         self.number = self.content['number']
 
     def get_links(self):
-        r = {
+        links = {
             self.content['miner']:
                 url_for('account_detail', account=self.content['miner']),
             self.content['parentHash']:
@@ -92,10 +95,10 @@ class Block:
         }
 
         for t in self.transactions:
-            r.update(t.get_links())
+            links.update(t.get_links())
         for u in self.uncles:
-            r.update(u.get_links())
-        return r
+            links.update(u.get_links())
+        return links
 
     @property
     def is_fresh(self):
@@ -144,6 +147,69 @@ class BlockChain:
     def __init__(self):
         self.web3 = Web3(IPCProvider())
         self.height = self.web3.eth.getBlockNumber()
+        self.db_conn = r.connect("localhost", 28015, 'ethernal')
+
+    def get_sync_work(self):
+        """
+        Returns range of blocks that need to be added to db
+        """
+        try:
+            last_synced = r.table('blocks').max('number').run(self.db_conn)
+            last_block = last_synced['number'] - 100
+
+            # delete all blocks that could be part of shorter chain
+            r.table('blocks').filter(
+                r.row['number'] > last_block
+            ).delete().run(self.db_conn)
+        except:
+            last_block = 1
+
+        return last_block, self.height
+
+    def sync_range(self, start, stop, print_debug=True):
+        for block_n in range(start, stop):
+            if print_debug and block_n % 100==0:
+                print(block_n)
+            block = Block(block_n, self)
+            r.table('blocks').insert(block.content).run(self.db_conn)
+
+    def sync_simple(self):
+        """
+        Synchronizes the chain to db in one process
+        """
+        self.sync_range(*self.get_sync_work())
+
+    @classmethod
+    def sync_chunk(cls, chunk):
+        chain = cls()
+        chain.sync_range(chunk.start, chunk.stop, print_debug=False)
+        print(chunk)
+
+    def sync_multiprocess(self, processes=None):
+        """
+        Synchronizes the chain using multiple processes digging trough
+        task pool. Task are ranges of blocks that needs to be synced.
+
+        Danger of this approach is that if you interrupt it you will have to
+        delete the whole table and create it afterwards.
+
+        Each process has its own IPC and DB connection.
+        """
+
+        from multiprocessing import Pool
+
+        pool = Pool(processes=processes)
+        chunk_size = 1000
+
+        start, end = self.get_sync_work()
+        full_jobs = range(start, end)
+        job_chunks = [
+            full_jobs[i:i+chunk_size]
+            for i in range(start, len(full_jobs), chunk_size)
+        ]
+
+        pool.map(BlockChain.sync_chunk, job_chunks)
+        print('Sync complete.')
 
     @property
     def latest_block(self):
