@@ -176,6 +176,8 @@ class Block:
 
 # noinspection PyBroadException
 class BlockChain:
+    DELETE_LAST_N_BLOCKS = 100
+
     def __init__(self):
         self.web3 = Web3(IPCProvider())
         self.height = self.web3.eth.getBlockNumber()
@@ -187,12 +189,7 @@ class BlockChain:
         """
         try:
             last_synced = r.table('blocks').max('number').run(self.db_conn)
-            last_block = last_synced['number'] - 100
-
-            # delete all blocks that could be part of shorter chain
-            r.table('blocks').filter(
-                r.row['number'] > last_block
-            ).delete().run(self.db_conn)
+            last_block = last_synced['number'] - self.DELETE_LAST_N_BLOCKS
         except:
             last_block = 1
 
@@ -203,16 +200,12 @@ class BlockChain:
         r.table('blocks').insert(block.content).run(self.db_conn)
 
     def sync_range(self, start, stop, print_debug=True):
-        errors = []
+        blocks = [
+            Block(n, self).content
+            for n in range(start, stop)
+        ]
 
-        for block_n in range(start, stop):
-            if print_debug and block_n % 100 == 0:
-                print(block_n)
-            try:
-                self.sync_block(block_n)
-            except:
-                errors.append(block_n)
-        return errors
+        r.table('blocks').insert(blocks).run(self.db_conn)
 
     def sync_simple(self):
         """
@@ -223,21 +216,11 @@ class BlockChain:
     @classmethod
     def sync_chunk(cls, chunk):
         chain = cls()
-        errors = chain.sync_range(chunk.start, chunk.stop, print_debug=False)
+        chain.sync_range(chunk.start, chunk.stop, print_debug=False)
         chain.db_conn.close()
-
-        for block_n in errors:
-            for t in range(3):
-                try:
-                    chain.sync_block(block_n)
-                    errors.remove(block_n)
-                    break
-                except:
-                    continue
 
         del chain
         print(chunk)
-        return errors
 
     def sync_multiprocess(self, processes=None):
         """
@@ -249,11 +232,19 @@ class BlockChain:
 
         Each process has its own IPC and DB connection.
         """
-
         chunk_size = 1000
 
         start, end = self.get_sync_work()
         full_jobs = range(1, end)
+
+        # delete all blocks that could be part of shorter chain
+        r.table('blocks').filter(
+            r.row['number'] > start
+        ).delete().run(self.db_conn)
+
+        r.table('transactions').filter(
+            r.row['number'] > start
+        ).delete().run(self.db_conn)
 
         job_chunks = [
             full_jobs[i:i+chunk_size]
@@ -261,8 +252,14 @@ class BlockChain:
         ]
 
         pool = Pool(processes=processes)
-        error_lists = pool.map(BlockChain.sync_chunk, job_chunks, chunksize=1)
-        print(error_lists)
+        pool.map(BlockChain.sync_chunk, job_chunks, chunksize=1)
+
+        # sync all transactions
+        r.table('transactions').insert(
+            r.table('blocks').filter(
+                r.row['number'] > start
+            ).concat_map(lambda b: b['transactions'])
+        ).run(self.db_conn)
 
         print('Sync complete.')
 

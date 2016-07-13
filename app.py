@@ -30,16 +30,16 @@ def account_detail(account):
 @app.route('/a/<account>/t/received/<int:page>')
 def transaction_received(account, page):
     return render_template(
-        'transaction.html',
-        transactions=ethernal.Account(account).transactions_received(page)
+        'json_view.html',
+        json_info=ethernal.Account(account).transactions_received(page)
     )
 
 
 @app.route('/a/<account>/t/sent/<int:page>')
 def transaction_sent(account, page):
     return render_template(
-        'transaction.html',
-        transactions=ethernal.Account(account).transactions_sent(page)
+        'json_view.html',
+        json_info=ethernal.Account(account).transactions_sent(page)
     )
 
 

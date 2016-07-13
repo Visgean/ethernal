@@ -6,6 +6,7 @@ try:
     conn = r.connect("localhost", 28015)
     r.db_create('ethernal').run(conn)
     r.db('ethernal').table_create('blocks').run(conn)
+    r.db('ethernal').table_create('transactions').run(conn)
 except r.errors.ReqlOpFailedError:
     pass
 
