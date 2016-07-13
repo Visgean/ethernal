@@ -3,6 +3,7 @@ import rethinkdb as r
 
 from web3 import Web3, IPCProvider
 from flask.helpers import url_for
+from multiprocessing import Pool
 
 
 class Transaction:
@@ -228,18 +229,17 @@ class BlockChain:
         Each process has its own IPC and DB connection.
         """
 
-        from multiprocessing import Pool
-
-        pool = Pool(processes=processes)
         chunk_size = 1000
 
         start, end = self.get_sync_work()
-        full_jobs = range(start, end)
+        full_jobs = range(1, end)
+
         job_chunks = [
             full_jobs[i:i+chunk_size]
-            for i in range(start, len(full_jobs), chunk_size)
+            for i in range(start, end, chunk_size)
         ]
 
+        pool = Pool(processes=processes)
         error_lists = pool.map(BlockChain.sync_chunk, job_chunks, chunksize=1)
         print(error_lists)
 
