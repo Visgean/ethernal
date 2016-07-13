@@ -50,18 +50,39 @@ class Transaction:
 
 
 class Account:
+    per_page = 50
+
     def __init__(self, account, chain=None):
         self.account = account
         self.chain = chain or BlockChain()
         self.web3 = self.chain.web3
         self.content = self._get_account_info(self.account)
 
+    def _boundaries_by_page(self, page):
+        return (page - 1) * self.per_page, page * self.per_page
+
+    def transactions_received(self, page):
+        return cached_tools.transactions_received(
+            self.account, *self._boundaries_by_page(page)
+        )
+
+    def transactions_sent(self, page):
+        return cached_tools.transactions_sent(
+            self.account, *self._boundaries_by_page(page)
+        )
+
+    def transactions_received_count(self):
+        return cached_tools.transactions_received_count(self.account)
+
+    def transactions_sent_count(self):
+        return cached_tools.transactions_sent_count(self.account)
+
     def get_full_info(self):
         partial = self.content.copy()
         partial.update({
             'blocks_mined': cached_tools.mined_blocks(self.account),
-            'sent': cached_tools.transactions_sent(self.account),
-            'received': cached_tools.transactions_received(self.account)
+            'sent': self.transactions_sent_count(),
+            'received': self.transactions_received_count()
         })
         return partial
 

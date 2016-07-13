@@ -46,14 +46,24 @@ def transactions_filter(account, t_type='from'):
         lambda b: b['transactions']
     ).filter(
         lambda t: t[t_type] == account
-    ).count().run(conn)
+    )
 
 
 @cache
-def transactions_sent(account):
-    return transactions_filter(account, 'from')
+def transactions_sent(account, x, y):
+    return transactions_filter(account, 'from')[x:y].run(conn)
 
 
 @cache
-def transactions_received(account):
-    return transactions_filter(account, 'to')
+def transactions_received(account, x, y):
+    return transactions_filter(account, 'to')[x:y].run(conn)
+
+
+@cache
+def transactions_sent_count(account):
+    return transactions_filter(account, 'from').count().run(conn)
+
+
+@cache
+def transactions_received_count(account):
+    return transactions_filter(account, 'to').count().run(conn)

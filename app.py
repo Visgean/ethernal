@@ -27,6 +27,22 @@ def account_detail(account):
     )
 
 
+@app.route('/a/<account>/t/received/<int:page>')
+def transaction_received(account, page):
+    return render_template(
+        'transaction.html',
+        transactions=ethernal.Account(account).transactions_received(page)
+    )
+
+
+@app.route('/a/<account>/t/sent/<int:page>')
+def transaction_sent(account, page):
+    return render_template(
+        'transaction.html',
+        transactions=ethernal.Account(account).transactions_sent(page)
+    )
+
+
 @app.route('/b/<int:block_number>')
 @app.route('/b/<block_number>')
 def block(block_number):
