@@ -79,10 +79,22 @@ class Account:
 
     def get_full_info(self):
         partial = self.content.copy()
+
+        sent_count = self.transactions_sent_count()
+        received_count = self.transactions_received_count()
+
+        if sent_count < self.per_page:
+            partial['sent'] = self.transactions_sent(1)
+
+        if received_count < self.per_page:
+            partial['received'] = self.transactions_received(1)
+
+
+
         partial.update({
             'blocks_mined': cached_tools.mined_blocks(self.account),
-            'sent': self.transactions_sent_count(),
-            'received': self.transactions_received_count()
+            'sent_count': sent_count,
+            'received_count': received_count,
         })
         return partial
 
@@ -199,7 +211,7 @@ class BlockChain:
         block = Block(block_n, self)
         r.table('blocks').insert(block.content).run(self.db_conn)
 
-    def sync_range(self, start, stop, print_debug=True):
+    def sync_range(self, start, stop):
         blocks = [
             Block(n, self).content
             for n in range(start, stop)
@@ -216,7 +228,7 @@ class BlockChain:
     @classmethod
     def sync_chunk(cls, chunk):
         chain = cls()
-        chain.sync_range(chunk.start, chunk.stop, print_debug=False)
+        chain.sync_range(chunk.start, chunk.stop)
         chain.db_conn.close()
 
         del chain

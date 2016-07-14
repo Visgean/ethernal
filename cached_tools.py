@@ -39,11 +39,13 @@ def cache(f, live=CACHE_SPAN):
 @cache
 def mined_blocks(address):
     with get_conn() as conn:
-        return r.table('blocks').filter({'miner': address}).count().run(conn)
+        return r.table(
+            'blocks'
+        ).get_all(address, index='miner').count().run(conn)
 
 
 def transactions_filter(account, t_type='from'):
-    return r.table('transactions').filter({t_type: account}, index=t_type)
+    return r.table('transactions').get_all(account, index=t_type)
 
 
 @cache

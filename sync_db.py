@@ -15,6 +15,7 @@ try:
     conn = r.connect("localhost", 28015, 'ethernal')
     r.table('blocks').index_create('hash').run(conn)
     r.table('blocks').index_create('number').run(conn)
+    r.table('blocks').index_create('miner').run(conn)
 
     r.table('transactions').index_create('hash').run(conn)
     r.table('transactions').index_create('number').run(conn)
