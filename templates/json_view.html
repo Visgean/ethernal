@@ -3,3 +3,19 @@
 {% block raw_content %}
     <pre><code class="json">{{ json_info|tojson(indent=2)|safe }}</code></pre>
 {% endblock %}
+
+{% block navigation %}
+    {% if next or previous %}
+    <nav>
+      <ul class="pager">
+          {% if previous %}
+            <li class="pager-prev"><a href="{{ previous }}">Previous</a></li>
+          {% endif %}
+        <li><a href="/">Ethernal</a></li>
+      {% if next %}
+        <li class="pager-next"><a href="{{ next }}">Next</a></li>
+      {% endif %}
+      </ul>
+    </nav>
+    {% endif %}
+{% endblock %}

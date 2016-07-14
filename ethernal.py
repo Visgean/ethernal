@@ -77,6 +77,26 @@ class Account:
     def transactions_sent_count(self):
         return cached_tools.transactions_sent_count(self.account)
 
+    def get_links(self):
+        return {
+            self.get_sent_link(): self.get_sent_link(),
+            self.get_received_link(): self.get_received_link()
+        }
+
+    def get_sent_link(self):
+        return url_for(
+            'transaction_sent',
+            account=self.account,
+            page=1
+        )
+
+    def get_received_link(self):
+        return url_for(
+            'transaction_received',
+            account=self.account,
+            page=1
+        )
+
     def get_full_info(self):
         partial = self.content.copy()
 
@@ -85,11 +105,12 @@ class Account:
 
         if sent_count < self.per_page:
             partial['sent'] = self.transactions_sent(1)
-
+        else:
+            partial['sent_link'] = self.get_sent_link()
         if received_count < self.per_page:
             partial['received'] = self.transactions_received(1)
-
-
+        else:
+            partial['received_link'] = self.get_sent_link()
 
         partial.update({
             'blocks_mined': cached_tools.mined_blocks(self.account),

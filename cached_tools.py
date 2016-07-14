@@ -51,13 +51,13 @@ def transactions_filter(account, t_type='from'):
 @cache
 def transactions_sent(account, x, y):
     with get_conn() as conn:
-        return transactions_filter(account, 'from')[x:y].run(conn)
+        return list(transactions_filter(account, 'from')[x:y].run(conn))
 
 
 @cache
 def transactions_received(account, x, y):
     with get_conn() as conn:
-        return transactions_filter(account, 'to')[x:y].run(conn)
+        return list(transactions_filter(account, 'to')[x:y].run(conn))
 
 
 @cache

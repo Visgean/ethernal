@@ -1,3 +1,5 @@
+from flask.helpers import url_for
+
 import ethernal
 
 from flask import Flask
@@ -21,25 +23,31 @@ def home():
 
 @app.route('/a/<account>')
 def account_detail(account):
+    a = ethernal.Account(account)
     return render_template(
         'account.html',
-        account=ethernal.Account(account)
+        account=a,
+        inline_links=a.get_links()
     )
 
 
-@app.route('/a/<account>/t/received/<int:page>')
+@app.route('/a/<account>/received/<int:page>')
 def transaction_received(account, page):
     return render_template(
         'json_view.html',
-        json_info=ethernal.Account(account).transactions_received(page)
+        json_info=ethernal.Account(account).transactions_received(page),
+        next=url_for('transaction_received', account=account, page=page+1),
+        previous=url_for('transaction_received', account=account, page=max((page-1, 1)))
     )
 
 
-@app.route('/a/<account>/t/sent/<int:page>')
+@app.route('/a/<account>/sent/<int:page>')
 def transaction_sent(account, page):
     return render_template(
         'json_view.html',
-        json_info=ethernal.Account(account).transactions_sent(page)
+        json_info=ethernal.Account(account).transactions_sent(page),
+        next=url_for('transaction_sent', account=account, page=page+1),
+        previous=url_for('transaction_sent', account=account, page=max((page-1, 1)))
     )
 
 
