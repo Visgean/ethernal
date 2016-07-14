@@ -76,3 +76,21 @@ def transactions_received_count(account):
 def transaction_count():
     with get_conn() as conn:
         return r.table('transactions').count().run(conn)
+
+
+@cache
+def transaction_value():
+    with get_conn() as conn:
+        return r.table('transactions').sum('value').run(conn)
+
+
+@cache
+def transaction_value():
+    with get_conn() as conn:
+        return r.table('transactions').sum('value').run(conn)
+
+
+@cache
+def chain_size():
+    with get_conn() as conn:
+        return r.table('blocks').sum('size').run(conn)

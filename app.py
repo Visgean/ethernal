@@ -1,5 +1,6 @@
 from flask.helpers import url_for
 
+import cached_tools
 import ethernal
 
 from flask import Flask
@@ -70,3 +71,13 @@ def transaction(t_hash):
         transaction=t,
         inline_links=t.get_links(),
     )
+
+@app.route('/stats/')
+def stats():
+    return render_template(
+        'stats.html',
+        t_count=cached_tools.transaction_count(),
+        t_value=cached_tools.transaction_value(),
+    )
+
+
